@@ -6,43 +6,42 @@ on:
       - main
 
 jobs:
-  test:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Install server dependencies and run tests
-        working-directory: ./server
-        run: |
-          npm ci
-          npm test -- --watchAll=false
-
-      - name: Install client dependencies and run tests
+      - name: Install client dependencies
         working-directory: ./client
-        run: |
-          npm ci
-          npm test -- --watchAll=false
+        run: npm ci
 
-      # add similar step for worker if needed
-
-  build:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install and build server
+      - name: Install server dependencies
         working-directory: ./server
-        run: |
-          npm ci
-          npm run build
+        run: npm ci
 
-      - name: Install and build client
+      - name: Install worker dependencies
+        working-directory: ./worker
+        run: npm ci
+
+      - name: Build client
         working-directory: ./client
+        run: npm run build
+
+      - name: Zip Dockerrun and other needed files
         run: |
-          npm ci
-          npm run build
+          zip -r deploy.zip Dockerrun.aws.json
+          # Include other files if needed:
+          # zip -r deploy.zip Dockerrun.aws.json .ebextensions
 
-      # add similar step for worker if needed
-
-      # Deployment step here...
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: multi-docker
+          environment_name: multi-docker-env
+          region: ${{ secrets.AWS_REGION }}
+          version_label: ${{ github.sha }}
+          deployment_package: deploy.zip
