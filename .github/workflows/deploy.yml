@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: Deploy to Elastic Beanstalk
 
 on:
   push:
@@ -6,43 +6,26 @@ on:
       - main
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
-
-      - name: List client directory files
-        working-directory: ./client
-        run: ls -la
 
       - name: Install client dependencies
         working-directory: ./client
-        run: npm ci
-
-      - name: List server directory files
-        working-directory: ./server
-        run: ls -la
-
-      - name: Install server dependencies
-        working-directory: ./server
-        run: npm ci
-
-      - name: List worker directory files
-        working-directory: ./worker
-        run: ls -la
-
-      - name: Install worker dependencies
-        working-directory: ./worker
         run: npm ci
 
       - name: Build client
         working-directory: ./client
         run: npm run build
 
-      - name: Zip deployment package
-        run: zip -r deploy.zip Dockerrun.aws.json ./client/build
+      - name: Prepare deployment bundle
+        run: |
+          cp Dockerrun.aws.json ./client/build/
+          cd ./client/build
+          zip -r ../../deploy.zip *
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
