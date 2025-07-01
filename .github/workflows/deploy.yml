@@ -41,8 +41,8 @@ jobs:
         working-directory: ./client
         run: npm run build
 
-      - name: Zip build artifacts
-        run: zip -r deploy.zip ./client/build
+      - name: Zip deployment package
+        run: zip -r deploy.zip Dockerrun.aws.json ./client/build
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
