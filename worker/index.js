@@ -1,7 +1,8 @@
-const keys = require('./keys');
+// 1. Import redis and keys first
 const redis = require('redis');
+const keys = require('./keys'); // make sure keys exports redisHost and redisPort
 
-// 🔁 Create Redis client and subscriber
+// 2. Create Redis client and subscriber
 const redisClient = redis.createClient({
   host: keys.redisHost,
   port: keys.redisPort,
@@ -10,23 +11,21 @@ const redisClient = redis.createClient({
 
 const sub = redisClient.duplicate();
 
-// 🧠 Safe Fibonacci function with guard
+// 3. Fibonacci function
 function fib(index) {
-  const num = parseInt(index);
-  if (isNaN(num) || num < 0) return 0;
-  if (num < 2) return 1;
-  return fib(num - 1) + fib(num - 2);
+  if (index < 2) return 1;
+  return fib(index - 1) + fib(index - 2);
 }
 
-// 📩 Listen for insert events and calculate fib
+// 4. Subscribe to 'insert' events and process
 sub.on('message', (channel, message) => {
-  console.log(`📨 Processing index: ${message}`);
-  try {
-    const result = fib(message);
-    redisClient.hset('values', message, result);
-  } catch (err) {
-    console.error(`❌ Error processing index ${message}:`, err.message);
-  }
+  console.log(`Processing index: ${message}`);
+  const index = parseInt(message);
+  if (isNaN(index)) return;
+
+  const result = fib(index);
+  redisClient.hset('values', message, result.toString());
+  console.log(`Calculated fib(${index}) = ${result}`);
 });
 
 sub.subscribe('insert');

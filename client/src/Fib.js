@@ -1,77 +1,91 @@
-import React, { Component } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import './App.css';
 
-class Fib extends Component {
-  state = {
-    seenIndexes: [],
-    values: {},
-    index: '',
-  };
+function Fib() {
+  const [index, setIndex] = useState('');
+  const [seenIndices, setSeenIndices] = useState([]);
+  const [calculatedValues, setCalculatedValues] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  componentDidMount() {
-    this.fetchValues();
-    this.fetchIndexes();
-  }
-
-  async fetchValues() {
-    const values = await axios.get('/api/values/current');
-    this.setState({ values: values.data });
-  }
-
-  async fetchIndexes() {
-    const seenIndexes = await axios.get('/api/values/all');
-    this.setState({
-      seenIndexes: seenIndexes.data,
-    });
-  }
-
-  handleSubmit = async (event) => {
-    event.preventDefault();
-
-    await axios.post('/api/values', {
-      index: this.state.index,
-    });
-    this.setState({ index: '' });
-  };
-
-  renderSeenIndexes() {
-    return this.state.seenIndexes.map(({ number }) => number).join(', ');
-  }
-
-  renderValues() {
-    const entries = [];
-
-    for (let key in this.state.values) {
-      entries.push(
-        <div key={key}>
-          For index {key} I calculated {this.state.values[key]}
-        </div>
-      );
+  // Memoized Fibonacci calculation
+  const fibonacci = (n) => {
+    if (n <= 0) return 0;
+    if (n === 1) return 1;
+    
+    let a = 0, b = 1, temp;
+    for (let i = 2; i <= n; i++) {
+      temp = a + b;
+      a = b;
+      b = temp;
     }
+    return b;
+  };
 
-    return entries;
-  }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const num = parseInt(index);
+    
+    if (isNaN(num) || num < 0) return;
+    
+    setIsLoading(true);
+    
+    // Simulate async operation (remove setTimeout in production)
+    setTimeout(() => {
+      if (!seenIndices.includes(num)) {
+        const newSeenIndices = [...seenIndices, num].sort((a, b) => a - b);
+        setSeenIndices(newSeenIndices);
+        
+        const value = fibonacci(num);
+        setCalculatedValues(prev => ({
+          ...prev,
+          [num]: value
+        }));
+      }
+      setIsLoading(false);
+      setIndex('');
+    }, 300);
+  };
 
-  render() {
-    return (
-      <div>
-        <form onSubmit={this.handleSubmit}>
-          <label>Enter your index:</label>
-          <input
-            value={this.state.index}
-            onChange={(event) => this.setState({ index: event.target.value })}
-          />
-          <button>Submit</button>
-        </form>
+  return (
+    <div className="App">
+      <header className="App-header">
+        <h1>Fibonacci Calculator</h1>
+        
+        <div className="fib-container">
+          <form onSubmit={handleSubmit}>
+            <label>Enter a positive index:</label>
+            <input
+              type="number"
+              value={index}
+              onChange={(e) => setIndex(e.target.value)}
+              min="0"
+              required
+              disabled={isLoading}
+            />
+            <button 
+              type="submit" 
+              disabled={isLoading}
+              className={isLoading ? 'loading' : ''}
+            >
+              {isLoading ? 'Calculating...' : 'Calculate'}
+            </button>
+          </form>
 
-        <h3>Indexes I have seen:</h3>
-        {this.renderSeenIndexes()}
-
-        <h3>Calculated Values:</h3>
-        {this.renderValues()}
-      </div>
-    );
-  }
+          <div className="history">
+            <h3>Indexes I have seen:</h3>
+            <p>{seenIndices.length > 0 ? seenIndices.join(', ') : 'None yet'}</p>
+            
+            <h3>Calculated Values:</h3>
+            {seenIndices.map(idx => (
+              <p key={idx}>
+                Fib({idx}) = {calculatedValues[idx]}
+              </p>
+            ))}
+          </div>
+        </div>
+      </header>
+    </div>
+  );
 }
 
 export default Fib;

@@ -42,6 +42,10 @@ const redisClient = redis.createClient({
 const redisPublisher = redisClient.duplicate();
 
 // ✅ Express Route Handlers
+app.listen(5000, '0.0.0.0', () => {
+  console.log('🚀 Listening on port 5000');
+});
+
 app.get('/api/values/all', async (req, res) => {
   try {
     const values = await pgClient.query('SELECT * from values');
@@ -76,15 +80,11 @@ app.post('/api/values', async (req, res) => {
 
   redisClient.hset('values', index, 'Nothing yet!');
   redisPublisher.publish('insert', index);
+
+  console.log(`Published insert event for index ${index}`);  // <-- Add this line here
+
   pgClient.query('INSERT INTO values(number) VALUES($1)', [index])
     .catch(err => console.error("❌ Postgres insert error:", err));
 
   res.send({ working: true });
-});
-
-// ✅ Confirm app is running
-console.log("✅ Reached end of setup. Ready to listen...");
-
-app.listen(5000, '0.0.0.0', () => {
-  console.log('🚀 Listening on port 5000');
 });
