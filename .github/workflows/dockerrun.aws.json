@@ -1,0 +1,44 @@
+{
+    "AWSEBDockerrunVersion": 2,
+    "containerDefinitions": [
+      {
+        "name": "client",
+        "image": "shan1500/complex-client:latest",
+        "essential": true,
+        "memory": 128,
+        "portMappings": [
+          {
+            "hostPort": 3000,
+            "containerPort": 3000
+          }
+        ]
+      },
+      {
+        "name": "server",
+        "image": "shan1500/complex-server:latest",
+        "essential": true,
+        "memory": 256,
+        "portMappings": [
+          {
+            "hostPort": 5000,
+            "containerPort": 5000
+          }
+        ],
+        "environment": [
+          { "name": "PGUSER", "value": "postgres" },
+          { "name": "PGPASSWORD", "value": "your_postgres_password" },
+          { "name": "PGHOST", "value": "your_postgres_host" },
+          { "name": "PGDATABASE", "value": "postgres" },
+          { "name": "PGPORT", "value": "5432" },
+          { "name": "REDIS_HOST", "value": "your_redis_host" },
+          { "name": "REDIS_PORT", "value": "6379" }
+        ]
+      },
+      {
+        "name": "worker",
+        "image": "shan1500/complex-worker:latest",
+        "essential": true,
+        "memory": 256
+      }
+    ]
+  }
