@@ -10,25 +10,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Install dependencies
-        run: npm ci
-      - name: Run tests
-        run: npm test -- --watchAll=false
+
+      - name: Install server dependencies and run tests
+        working-directory: ./server
+        run: |
+          npm ci
+          npm test -- --watchAll=false
+
+      - name: Install client dependencies and run tests
+        working-directory: ./client
+        run: |
+          npm ci
+          npm test -- --watchAll=false
+
+      # add similar step for worker if needed
 
   build:
     needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Install dependencies
-        run: npm ci
-      - name: Build React app
-        run: npm run build
 
-      # Add your deploy steps here, e.g., upload to Netlify, AWS, or push Docker image
-      # - name: Deploy to Netlify
-      #   uses: nwtgck/actions-netlify@v1.1
-      #   with:
-      #     publish-dir: ./build
-      #     production-branch: main
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install and build server
+        working-directory: ./server
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install and build client
+        working-directory: ./client
+        run: |
+          npm ci
+          npm run build
+
+      # add similar step for worker if needed
+
+      # Deployment step here...
