@@ -1,31 +1,48 @@
-name: Deploy to Elastic Beanstalk
+name: CI Pipeline
 
 on:
   push:
     branches:
-      - main  # trigger deploy on push to main branch
+      - main
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'  # your Node.js version
+      - name: List client directory files
+        working-directory: ./client
+        run: ls -la
 
-      - name: Install dependencies
+      - name: Install client dependencies
+        working-directory: ./client
         run: npm ci
 
-      - name: Build React app
+      - name: List server directory files
+        working-directory: ./server
+        run: ls -la
+
+      - name: Install server dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: List worker directory files
+        working-directory: ./worker
+        run: ls -la
+
+      - name: Install worker dependencies
+        working-directory: ./worker
+        run: npm ci
+
+      - name: Build client
+        working-directory: ./client
         run: npm run build
 
       - name: Zip build artifacts
-        run: zip -r deploy.zip build
+        run: zip -r deploy.zip ./client/build
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
