@@ -26,6 +26,11 @@ jobs:
       
       - name: Copy Dockerrun.aws.json to build folder
         run: cp Dockerrun.aws.json ./client/build/
+      
+      - name: Prepare deployment bundle
+        run: |
+          cd ./client/build
+          zip -r ../../../deploy.zip *
 
       - name: Prepare deployment bundle
         run: |
