@@ -25,18 +25,15 @@ jobs:
         run: ls -la
       
       - name: Copy Dockerrun.aws.json to build folder
-        run: cp Dockerrun.aws.json ./client/build/
+        run: cp ./dockerrun.aws.json ./client/build/
+
+      - name: List build directory files (after copy)
+        run: ls -la ./client/build/
       
       - name: Prepare deployment bundle
         run: |
           cd ./client/build
           zip -r ../../../deploy.zip *
-
-      - name: Prepare deployment bundle
-        run: |
-          cd ./client/build
-          zip -r ../../../deploy.zip *
-          cd ../../
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
