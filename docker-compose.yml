@@ -1,29 +1,13 @@
-version: '3.8'
+version: "3.8"
 
 services:
   client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile.dev
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./client:/app
-      - /app/node_modules
+    image: yourdockerhubuser/multi-client
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
 
   server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile.dev
-    ports:
-      - "5001:5000"
-    volumes:
-      - ./server:/app
-      - /app/node_modules
-    depends_on:
-      - postgres
+    image: yourdockerhubuser/multi-server
     environment:
       - PGUSER=postgres
       - PGPASSWORD=postgres_password
@@ -32,36 +16,18 @@ services:
       - PGPORT=5432
 
   worker:
-    build:
-      context: ./worker
-      dockerfile: Dockerfile.dev
-    volumes:
-      - ./worker:/app
-      - /app/node_modules
-    depends_on:
-      - redis
-      - postgres
+    image: yourdockerhubuser/multi-worker
 
   postgres:
-    image: postgres:latest
+    image: postgres:13
     environment:
       - POSTGRES_PASSWORD=postgres_password
-    ports:
-      - "5432:5432"
 
   redis:
-    image: redis:latest
-    ports:
-      - "6379:6379"
+    image: redis:alpine
 
   nginx:
-    image: nginx:alpine
+    image: yourdockerhubuser/multi-nginx
     ports:
       - "80:80"
-    volumes:
-      - ./nginx:/etc/nginx/conf.d
-      - ./client/build:/usr/share/nginx/html
-    depends_on:
-      - client
-      - server
 
