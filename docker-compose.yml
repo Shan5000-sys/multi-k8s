@@ -2,12 +2,12 @@ version: "3.8"
 
 services:
   client:
-    image: yourdockerhubuser/multi-client
+    image: shan1500/multi-client
     environment:
       - NODE_ENV=production
 
   server:
-    image: yourdockerhubuser/multi-server
+    image: shan1500/multi-server
     environment:
       - PGUSER=postgres
       - PGPASSWORD=postgres_password
@@ -17,7 +17,7 @@ services:
       - REDIS_HOST=redis
 
   worker:
-    image: yourdockerhubuser/multi-worker
+    image: shan1500/multi-worker
     environment:
       - PGUSER=postgres
       - PGPASSWORD=postgres_password
@@ -35,7 +35,7 @@ services:
     image: redis:alpine
 
   nginx:
-    image: yourdockerhubuser/multi-nginx
+    image: shan1500/multi-nginx
     ports:
       - "80:80"
 
