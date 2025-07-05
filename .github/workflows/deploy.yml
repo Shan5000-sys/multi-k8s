@@ -9,21 +9,21 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-steps:
-  - name: Checkout repo
-    uses: actions/checkout@v4
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-  - name: Zip Docker Compose deployment files
-    run: zip -r deploy.zip docker-compose.yml client/ server/ worker/ -x "**/node_modules/*" -x "**/.DS_Store"
+      - name: Zip Docker Compose deployment files
+        run: zip -r deploy.zip docker-compose.yml client/ server/ worker/ -x "**/node_modules/*" -x "**/.DS_Store"
 
-  - name: Deploy to Elastic Beanstalk
-    uses: einaregilsson/beanstalk-deploy@v21
-    with:
-      application_name: multi-docker
-      environment_name: multi-docker-env
-      version_label: ${{ github.sha }}-${{ github.run_id }}
-      region: ca-central-1
-      deployment_package: deploy.zip
-      aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      wait_for_deployment: true
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          application_name: multi-docker
+          environment_name: multi-docker-env
+          version_label: ${{ github.sha }}-${{ github.run_id }}
+          region: ca-central-1
+          deployment_package: deploy.zip
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          wait_for_deployment: true
