@@ -3,7 +3,7 @@ name: Deploy to Elastic Beanstalk
 on:
   push:
     branches:
-      - main
+      - main  # or 'master', depending on your repo
 
 jobs:
   deploy:
@@ -11,17 +11,11 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Install zip
-        run: sudo apt-get install zip
-
-      - name: List root directory files
-        run: ls -la
-
-      - name: Create deployment zip (Dockerrun + metadata)
+      - name: Zip deployment package
         run: |
-          zip -r deploy.zip Dockerrun.aws.json .elasticbeanstalk
+          zip -r deploy.zip docker-compose.yml client/ server/ worker/ -x "**/node_modules/*" -x "**/.DS_Store"
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
