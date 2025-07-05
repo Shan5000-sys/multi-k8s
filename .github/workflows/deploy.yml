@@ -13,27 +13,15 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Install client dependencies
-        working-directory: ./client
-        run: npm ci
+      - name: Install zip
+        run: sudo apt-get install zip
 
-      - name: Build client
-        working-directory: ./client
-        run: npm run build
-      
       - name: List root directory files
         run: ls -la
-      
-      - name: Copy Dockerrun.aws.json to build folder
-        run: cp ./dockerrun.aws.json ./client/build/
 
-      - name: List build directory files (after copy)
-        run: ls -la ./client/build/
-      
-      - name: Prepare deployment bundle
+      - name: Create deployment zip (Dockerrun + metadata)
         run: |
-          cd ./client/build
-          zip -r ../../../deploy.zip *
+          zip -r deploy.zip Dockerrun.aws.json .elasticbeanstalk
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
