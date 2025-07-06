@@ -1,10 +1,16 @@
 version: "3.8"
 
 services:
-  client:
-    image: shan1500/multi-client
+  nginx:
+    image: shan1500/multi-nginx
     ports:
       - "80:80"
+    depends_on:
+      - client
+      - server
+
+  client:
+    image: shan1500/multi-client
     environment:
       - NODE_ENV=production
 
