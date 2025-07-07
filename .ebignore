@@ -1,0 +1,6 @@
+Dockerrun.aws.json
+*.zip
+*.DS_Store
+*.log
+
+

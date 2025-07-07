@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './App.css';
 
-// Set axios base URL for API calls
-axios.defaults.baseURL = 'http://localhost:5001';
+// No base URL needed – use reverse proxy paths
+// axios.defaults.baseURL = 'http://localhost:5001'; <-- REMOVE THIS
 
 function App() {
   const [seenIndexes, setSeenIndexes] = useState([]);
