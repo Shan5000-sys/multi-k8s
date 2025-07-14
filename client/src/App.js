@@ -80,7 +80,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <img src="/logo192.png" alt="Logo" className="logo-spin" style={{ width: '100px' }} />
-        <h1>Welcome to the Fibonacci Calculator</h1>
+        <h1>Fib Calculator Version 2 </h1>
 
         <form onSubmit={handleSubmit}>
           <label>Enter your index:</label>
