@@ -1,0 +1,16 @@
+.DS_Store
+*.log
+*.tgz
+*.lock
+*.tmp
+*.bak
+*.tsbuildinfo
+node_modules/
+client/node_modules/
+client/.next/
+client/dist/
+client/build/
+server/node_modules/
+worker/node_modules/
+.vscode/
+.idea/

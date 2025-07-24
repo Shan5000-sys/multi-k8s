@@ -1,11 +1,12 @@
-FROM node:16 as builder
+# Stage 1: Build React app
+FROM node:18 as builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 COPY . .
 RUN npm run build
 
-FROM nginx:alpine
+# Stage 2: Serve with Nginx
+FROM nginx:stable-alpine
+COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/build /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]

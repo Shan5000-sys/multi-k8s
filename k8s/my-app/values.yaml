@@ -1,0 +1,76 @@
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+  automount: true
+
+service:
+  type: ClusterIP
+  port: 80
+
+client:
+  image:
+    repository: shan1500/multi-client
+    tag: latest
+    pullPolicy: Always
+    imagePullSecrets:
+      - name: dockerhub-secret
+
+worker:
+  image:
+    repository: shan1500/multi-worker
+    tag: latest
+    pullPolicy: Always
+    imagePullSecrets:
+      - name: dockerhub-secret
+
+server:
+  image:
+    repository: shan1500/multi-server
+    tag: v3
+    pullPolicy: IfNotPresent
+  replicas: 3
+  env:
+    REDIS_HOST: redis-cluster-ip-service
+    REDIS_PORT: "6379"
+    PGUSER: postgres
+    PGHOST: postgres-cluster-ip-service
+    PGPORT: "5432"
+    PGDATABASE: postgres
+    PGPASSWORD_SECRET_NAME: pgpassword
+    PGPASSWORD_SECRET_KEY: PGPASSWORD
+
+redis:
+  image: redis
+  port: 6379
+  serviceType: ClusterIP
+
+postgres:
+  image: postgres
+  port: 5432
+  serviceType: ClusterIP
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+
+  hosts:
+    - host: ""
+      paths:
+        - path: /api(/|$)(.*)
+          pathType: Prefix
+        - path: /
+          pathType: Prefix
+
+  tls: []
+  
+nginx:
+  image:
+    repository: shan1500/multi-nginx
+    tag: latest
+
+autoscaling:
+  enabled: false

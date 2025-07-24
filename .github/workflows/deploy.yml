@@ -1,4 +1,4 @@
-name: Deploy to Kubernetes
+name: Deploy to GKE
 
 on:
   push:
@@ -7,24 +7,31 @@ on:
 
 jobs:
   deploy:
-    name: Apply Kubernetes configs
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: '1.28.0'
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        export_default_credentials: true
 
-      - name: Decode and configure kubeconfig
-        run: |
-          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > kubeconfig
-          mkdir -p $HOME/.kube
-          mv kubeconfig $HOME/.kube/config
+    - name: Configure Docker for GCR
+      run: gcloud auth configure-docker
 
-      - name: Apply Kubernetes manifests
-        run: |
-          kubectl apply -f k8s
+    - name: Build and Push Docker Image
+      run: |
+        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/my-app:latest .
+        docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/my-app:latest
+
+    - name: Get GKE credentials
+      run: |
+        gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER }} --zone ${{ secrets.GKE_ZONE }}
+
+    - name: Deploy to GKE
+      run: |
+        kubectl apply -f k8s

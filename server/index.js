@@ -1,90 +1,95 @@
-const keys = require('./keys');
-
 const express = require('express');
+const { Pool } = require('pg');
+const redis = require('redis');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const redis = require('redis');
-const { Pool } = require('pg'); // 👈 Include PG here
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// ✅ Postgres Client Setup with Retry
+// PostgreSQL setup
 const pgClient = new Pool({
-  user: keys.pgUser,
-  host: keys.pgHost,
-  database: keys.pgDatabase,
-  password: keys.pgPassword,
-  port: keys.pgPort,
-  ssl: process.env.NODE_ENV !== 'production' ? false : { rejectUnauthorized: false },
+  host: process.env.PGHOST || 'localhost',
+  port: process.env.PGPORT || 5432,
+  user: process.env.PGUSER || 'postgres',
+  password: process.env.PGPASSWORD || 'postgres_password',
+  database: process.env.PGDATABASE || 'values',
 });
 
-const createTable = async () => {
-  try {
-    await pgClient.query('CREATE TABLE IF NOT EXISTS values (number INT)');
-    console.log("✅ Postgres table created or already exists");
-  } catch (err) {
-    console.error("❌ Table creation failed. Retrying in 5s...", err.message);
-    setTimeout(createTable, 5000); // Retry after 5 seconds
-  }
-};
+pgClient.on('error', () => console.error('❌ PG connection lost'));
 
-pgClient.on('error', () => console.error('❌ Postgres connection lost'));
-createTable();
+pgClient
+  .query('CREATE TABLE IF NOT EXISTS values (number INT)')
+  .catch((err) => console.error('❌ PG table creation failed:', err));
 
-// ✅ Redis Client Setup
-const redisClient = redis.createClient({
-  host: keys.redisHost,
-  port: keys.redisPort,
-  retry_strategy: () => 1000,
-});
-const redisPublisher = redisClient.duplicate();
-
-// ✅ Express Route Handlers
-app.listen(5000, '0.0.0.0', () => {
-  console.log('🚀 Listening on port 5000');
-});
-
-app.get('/api/values/all', async (req, res) => {
-  try {
-    const values = await pgClient.query('SELECT * from values');
-    res.send(values.rows);
-  } catch (err) {
-    console.error("❌ Failed to fetch all values:", err);
-    res.status(500).send("Internal Server Error");
-  }
-});
-
-app.get('/api', (req, res) => {
-  res.send('API is working ✅');
-});
-
-
-app.get('/api/values/current', (req, res) => {
-  redisClient.hgetall('values', (err, values) => {
-    if (err) {
-      console.error("❌ Redis error:", err);
-      return res.status(500).send("Redis error");
-    }
-    res.send(values);
+async function startServer() {
+  // Redis setup (v4+)
+  const redisClient = redis.createClient({
+    url: `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`,
   });
-});
 
-app.post('/api/values', async (req, res) => {
-  const index = req.body.index;
+  const redisPublisher = redisClient.duplicate();
 
-  if (parseInt(index) > 40) {
-    return res.status(422).send('Index too high');
+  try {
+    await redisClient.connect();
+    await redisPublisher.connect();
+    console.log('✅ Redis connected');
+  } catch (err) {
+    console.error('❌ Redis connection failed:', err);
   }
 
-  redisClient.hset('values', index, 'Nothing yet!');
-  redisPublisher.publish('insert', index);
+  // Express routes
+  app.get('/api/values/all', async (req, res) => {
+    try {
+      const values = await pgClient.query('SELECT * FROM values');
+      res.send(values.rows);
+    } catch (err) {
+      res.status(500).send('Error fetching from Postgres');
+    }
+  });
 
-  console.log(`Published insert event for index ${index}`);  // <-- Add this line here
+  app.get('/api/values/current', async (req, res) => {
+    try {
+      const values = await redisClient.hGetAll('values');
+      res.send(values);
+    } catch (err) {
+      res.status(500).send('Error fetching from Redis');
+    }
+  });
 
-  pgClient.query('INSERT INTO values(number) VALUES($1)', [index])
-    .catch(err => console.error("❌ Postgres insert error:", err));
+  app.post('/api/values', async (req, res) => {
+    const index = parseInt(req.body.index);
 
-  res.send({ working: true });
+    if (isNaN(index)) {
+      return res.status(400).send('Index must be a number');
+    }
+
+    if (index > 40) {
+      return res.status(422).send('Index too high');
+    }
+
+    try {
+      await redisClient.hSet('values', index, 'Nothing yet!');
+      await redisPublisher.publish('insert', index.toString());
+
+      await pgClient.query('INSERT INTO values(number) VALUES($1)', [index]);
+      console.log('✅ Inserted into Postgres:', index);
+
+      res.send({ working: true });
+    } catch (err) {
+      console.error('❌ Failed to process index:', err.message);
+      res.status(500).send('Server error');
+    }
+  });
+
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`✅ Server running on port ${PORT}`);
+  });
+}
+
+startServer().catch((err) => {
+  console.error('❌ Server failed to start:', err);
 });
+

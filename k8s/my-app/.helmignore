@@ -1,0 +1,25 @@
+# .helmignore
+
+# Ignore dependency directories
+node_modules/
+client/node_modules/
+server/node_modules/
+worker/
+
+# Ignore build artifacts
+client/.next/
+client/dist/
+client/build/
+server/dist/
+server/build/
+worker/dist/
+worker/build/
+
+# Common temp and IDE files
+*.tmp
+*.bak
+*.tsbuildinfo
+.vscode/
+.idea/
+.DS_Store
+.git/
