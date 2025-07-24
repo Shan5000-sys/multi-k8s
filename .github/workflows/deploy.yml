@@ -28,10 +28,9 @@ jobs:
 
       - name: Build and Push Docker Images
         run: |
-          docker buildx build --platform linux/amd64 --push -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-client ./client
-          docker buildx build --platform linux/amd64 --push -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-server ./server
-          docker buildx build --platform linux/amd64 --push -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-worker ./worker
-
+          cd client && docker buildx build --platform linux/amd64 -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-client --push .
+          cd ../server && docker buildx build --platform linux/amd64 -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-server --push .
+          cd ../worker && docker buildx build --platform linux/amd64 -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-worker --push .
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
