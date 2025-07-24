@@ -13,7 +13,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Google Cloud SDK
+    - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v1
       with:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
@@ -23,22 +23,24 @@ jobs:
     - name: Configure Docker for GCR
       run: gcloud auth configure-docker
 
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
     - name: Build and Push Docker Images
       run: |
-        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-client ./client
-        docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-client
+        docker buildx build --platform linux/amd64 --push -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-client ./client
+        docker buildx build --platform linux/amd64 --push -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-server ./server
+        docker buildx build --platform linux/amd64 --push -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-worker ./worker
 
-        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-server ./server
-        docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-server
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: v1.28.0
 
-        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-worker ./worker
-        docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-worker
-
-    - name: Get GKE Credentials
+    - name: Get GKE credentials
       run: |
-        gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER_NAME }} \
-          --region ${{ secrets.GKE_CLUSTER_REGION }}
+        gcloud container clusters get-credentials multi-cluster --zone us-central1-c --project ${{ secrets.GCP_PROJECT_ID }}
 
     - name: Apply Kubernetes configs
       run: |
-        kubectl apply -f k8s
+        kubectl apply -f ./k8s
