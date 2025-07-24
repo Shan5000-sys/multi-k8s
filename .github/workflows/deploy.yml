@@ -13,7 +13,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Cloud SDK
+    - name: Set up Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v1
       with:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
@@ -34,7 +34,7 @@ jobs:
         docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-worker ./worker
         docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-worker
 
-    - name: Get GKE credentials
+    - name: Get GKE Credentials
       run: |
         gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER_NAME }} \
           --region ${{ secrets.GKE_CLUSTER_REGION }}
