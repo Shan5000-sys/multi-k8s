@@ -26,10 +26,6 @@ jobs:
       - name: Install gke-gcloud-auth-plugin
         run: |
           gcloud components install gke-gcloud-auth-plugin
-      
-      - name: Enable GKE auth plugin usage
-        run: |
-          gcloud config set auth/use_gke_gcloud_auth_plugin True
 
       - name: Configure Docker for GCR
         run: |
