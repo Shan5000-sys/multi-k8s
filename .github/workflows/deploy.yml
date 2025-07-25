@@ -29,6 +29,12 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+      
+      - name: Debug: Echo Docker Build Commands
+        run: |
+          echo "1: docker buildx build --platform linux/amd64 --push -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-client:latest ./client"
+          echo "2: docker buildx build --platform linux/amd64 --push -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-server:latest ./server"
+          echo "3: docker buildx build --platform linux/amd64 --push -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/multi-worker:latest ./worker"
 
       - name: Build and Push Docker Images
         run: |
